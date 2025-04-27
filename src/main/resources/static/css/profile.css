@@ -1,0 +1,109 @@
+/* Profile page styles */
+.profile-header {
+    padding: 2rem 1rem;
+    margin-bottom: 2rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.profile-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.profile-stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 1.5rem 0;
+}
+
+.profile-stat-item {
+    text-align: center;
+}
+
+.profile-stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.profile-stat-label {
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    color: #6c757d;
+}
+
+.profile-bio {
+    max-width: 600px;
+    margin: 0 auto 1.5rem;
+}
+
+.profile-tabs {
+    margin-bottom: 2rem;
+}
+
+.profile-edit-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.avatar-upload {
+    position: relative;
+    width: 150px;
+    margin: 0 auto 1.5rem;
+}
+
+.avatar-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-edit {
+    position: absolute;
+    right: 10px;
+    bottom: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.avatar-upload input {
+    display: none;
+}
+
+.profile-social-links i {
+    font-size: 1.5rem;
+    margin: 0 0.5rem;
+    color: #6c757d;
+    transition: color 0.2s;
+}
+
+.profile-social-links i:hover {
+    color: #0d6efd;
+}
+
+.follow-btn {
+    min-width: 100px;
+}

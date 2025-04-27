@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+  <title>BlogSphere - Profile</title>
+  <link rel="stylesheet" th:href="@{/css/profile.css}">
+</head>
+<body>
+
+
+  <div layout:fragment="content">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="mb-3">
+              <img src="/img/default-avatar.jpg" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;" alt="Profile Picture">
+            </div>
+            <h3 th:text="${profileUser.username}">Username</h3>
+            <p class="text-muted" th:text="${profileUser.email}">user@example.com</p>
+
+            <div class="d-flex justify-content-center gap-3">
+              <div>
+                <strong th:text="${profileUser.posts != null ? profileUser.posts.size() : 0}">0</strong>
+                <div>Posts</div>
+              </div>
+              <div>
+                <strong th:text="${profileUser.followers != null ? profileUser.followers.size() : 0}">0</strong>
+                <div>Followers</div>
+              </div>
+              <div>
+                <strong th:text="${profileUser.following != null ? profileUser.following.size() : 0}">0</strong>
+                <div>Following</div>
+              </div>
+            </div>
+
+            <div class="mt-3" th:if="${!isCurrentUser}" sec:authorize="isAuthenticated()">
+              <form th:if="${!isFollowing}" th:action="@{/subscriptions/{id}(id=${profileUser.id})}" method="post">
+                <button type="submit" class="btn btn-primary">Follow</button>
+              </form>
+              <form th:if="${isFollowing}" th:action="@{/subscriptions/{id}/unfollow(id=${profileUser.id})}" method="post">
+                <button type="submit" class="btn btn-outline-primary">Unfollow</button>
+              </form>
+            </div>
+
+            <div class="mt-3" th:if="${isCurrentUser}">
+              <a th:href="@{/profile/edit}" class="btn btn-outline-primary">Edit Profile</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <h3>Blog Posts</h3>
+        <div th:if="${profileUser.posts != null && !profileUser.posts.isEmpty()}">
+          <div class="card mb-3" th:each="post : ${profileUser.posts}">
+            <div class="card-body">
+              <h5 class="card-title" th:text="${post.title}">Blog Title</h5>
+              <h6 class="card-subtitle mb-2 text-muted">
+                <span th:text="${#temporals.format(post.createdAt, 'dd MMM yyyy')}">Date</span>
+              </h6>
+              <p class="card-text" th:text="${#strings.abbreviate(post.content, 150)}">Content</p>
+              <a th:href="@{/blogs/{id}(id=${post.id})}" class="btn btn-sm btn-outline-primary">Read More</a>
+            </div>
+          </div>
+        </div>
+
+        <div th:if="${profileUser.posts == null || profileUser.posts.isEmpty()}" class="alert alert-light">
+          No blog posts yet.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

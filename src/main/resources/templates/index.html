@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>BlogSphere - A Modern Blogging Platform</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Hero Section -->
+        <div class="py-5 bg-light rounded-3 mb-5">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <h1 class="display-4 fw-bold">Welcome to BlogSphere</h1>
+                        <p class="lead">A platform for bloggers to share their thoughts and connect with readers around the world.</p>
+                        <p class="mb-4">Join our community today and start sharing your ideas with the world.</p>
+                        <div sec:authorize="!isAuthenticated()">
+                            <a th:href="@{/register}" class="btn btn-primary btn-lg me-2">Get Started</a>
+                            <a th:href="@{/login}" class="btn btn-outline-secondary btn-lg">Sign In</a>
+                        </div>
+                        <div sec:authorize="isAuthenticated()">
+                            <a th:href="@{/blogs/create}" class="btn btn-primary btn-lg me-2">Create Post</a>
+                            <a th:href="@{/dashboard}" class="btn btn-outline-secondary btn-lg">Dashboard</a>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 d-none d-lg-block">
+                        <img src="/img/hero-image.png" class="img-fluid" alt="Blog illustration">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Posts Section -->
+        <div class="container mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Featured Posts</h2>
+                <a th:href="@{/blogs}" class="btn btn-link">View All</a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4" th:if="${featuredPosts != null && featuredPosts.size() > 0}"
+                     th:with="post=${featuredPosts[0]}">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-0">
+                            <a th:href="@{/blogs/{id}(id=${post.id})}" class="text-decoration-none">
+                                <img th:if="${post.imageUrl}" th:src="${post.imageUrl}" class="img-fluid rounded-top" alt="Featured post">
+                                <div class="p-4">
+                                    <div class="small text-muted mb-1" th:text="${#temporals.format(post.createdAt, 'dd MMM yyyy')}">Date</div>
+                                    <h3 class="card-title" th:text="${post.title}">Post Title</h3>
+                                    <p class="card-text" th:text="${featuredPostSummaries[0]}">Content preview</p>
+                                </div>
+                            </a>
+                            <div class="p-4 pt-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <img th:src="${post.author.profileImage != null ? post.author.profileImage : '/img/default-avatar.jpg'}"
+                                             class="rounded-circle me-2" width="32" height="32" alt="Author avatar">
+                                        <a th:href="@{/profile/{username}(username=${post.author.username})}"
+                                           class="text-decoration-none" th:text="${post.author.username}">Author</a>
+                                    </div>
+                                    <div>
+                                        <span class="me-2"><i class="far fa-heart"></i> <span th:text="${post.likes.size()}">0</span></span>
+                                        <span><i class="far fa-comment"></i> <span th:text="${post.comments.size()}">0</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-12 mb-4" th:each="post, stat : ${featuredPosts}" th:if="${stat.index > 0 && stat.index < 4}">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="row g-0">
+                                    <div class="col-4" th:if="${post.imageUrl}">
+                                        <img th:src="${post.imageUrl}" class="img-fluid rounded-start h-100" style="object-fit: cover;" alt="Post image">
+                                    </div>
+                                    <div th:class="${post.imageUrl} ? 'col-8' : 'col-12'">
+                                        <div class="card-body">
+                                            <div class="small text-muted mb-1" th:text="${#temporals.format(post.createdAt, 'dd MMM yyyy')}">Date</div>
+                                            <h5 class="card-title">
+                                                <a th:href="@{/blogs/{id}(id=${post.id})}" class="text-decoration-none" th:text="${post.title}">Post Title</a>
+                                            </h5>
+                                            <p class="card-text small" th:text="${featuredPostSummaries[stat.index]}">Content preview</p>
+                                            <div class="d-flex align-items-center mt-2">
+                                                <img th:src="${post.author.profileImage != null ? post.author.profileImage : '/img/default-avatar.jpg'}"
+                                                     class="rounded-circle me-2" width="24" height="24" alt="Author avatar">
+                                                <small class="text-muted" th:text="${post.author.username}">Author</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${featuredPosts == null || featuredPosts.size()==0}" class="alert alert-light text-center p-5">
+                <i class="fas fa-newspaper fa-3x mb-3 text-muted"></i>
+                <p>No featured posts available yet.</p>
+                <div sec:authorize="isAuthenticated()">
+                    <a th:href="@{/blogs/create}" class="btn btn-primary">Create the first post</a>
+                </div>
+                <div sec:authorize="!isAuthenticated()">
+                    <a th:href="@{/register}" class="btn btn-primary">Join and start blogging</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest Posts Section -->
+        <div class="container mb-5">
+            <h2 class="mb-4">Latest Posts</h2>
+
+            <div class="row">
+                <div class="col-md-4 mb-4" th:each="blog,stat : ${latestBlogs}">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div th:if="${blog.imageUrl}" class="blog-card-img-wrapper" style="height: 200px; overflow: hidden;">
+                            <img th:src="${blog.imageUrl}" class="card-img-top" style="object-fit: cover; height: 100%;" alt="Blog image">
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a th:href="@{/blogs/{id}(id=${blog.id})}" class="text-decoration-none" th:text="${blog.title}">Blog Title</a>
+                            </h5>
+                            <div class="d-flex align-items-center text-muted mb-2 small">
+                                <span>By </span>
+                                <a th:href="@{/profile/{username}(username=${blog.author.username})}"
+                                   class="ms-1 text-decoration-none" th:text="${blog.author.username}">Author</a>
+                                <span class="mx-1">•</span>
+                                <span th:text="${#temporals.format(blog.createdAt, 'dd MMM yyyy')}">Date</span>
+                            </div>
+                            <p class="card-text" th:text="${latestBlogSummaries[stat.index]}">Content preview</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a th:href="@{/blogs/{id}(id=${blog.id})}" class="btn btn-sm btn-outline-primary">Read More</a>
+                                <div>
+                                        <span class="me-2 small">
+                                            <i class="far fa-heart"></i> <span th:text="${blog.likes.size()}">0</span>
+                                        </span>
+                                    <span class="small">
+                                            <i class="far fa-comment"></i> <span th:text="${blog.comments.size()}">0</span>
+                                        </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(latestBlogs)}" class="alert alert-light text-center p-5">
+                <i class="fas fa-newspaper fa-3x mb-3 text-muted"></i>
+                <p>No blog posts yet. Be the first to create a post!</p>
+                <div sec:authorize="isAuthenticated()">
+                    <a th:href="@{/blogs/create}" class="btn btn-primary">Create a post</a>
+                </div>
+                <div sec:authorize="!isAuthenticated()">
+                    <a th:href="@{/register}" class="btn btn-primary">Register to start blogging</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Section -->
+        <div class="container mb-5 pb-4">
+            <h2 class="mb-4">Explore Categories</h2>
+
+            <div class="row g-4">
+                <div class="col-md-4" th:each="category : ${categories}">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <div class="category-icon mb-3">
+                                <i th:class="${'fas fa-' + category.icon + ' fa-3x'}"></i>
+                            </div>
+                            <h5 class="card-title" th:text="${category.name}">Category Name</h5>
+                            <p class="card-text text-muted" th:text="${category.description}">Category description</p>
+                            <a th:href="@{/blogs(category=${category.id})}" class="btn btn-sm btn-outline-primary">Browse Posts</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="bg-primary text-white py-5 mb-5">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-8 mb-4 mb-lg-0">
+                        <h2 class="display-6 fw-bold">Ready to start sharing your thoughts?</h2>
+                        <p class="lead mb-0">Join thousands of bloggers on BlogSphere and reach readers worldwide.</p>
+                    </div>
+                    <div class="col-lg-4 text-center text-lg-end">
+                        <div sec:authorize="!isAuthenticated()">
+                            <a th:href="@{/register}" class="btn btn-light btn-lg me-2">Sign Up</a>
+                            <a th:href="@{/login}" class="btn btn-outline-light btn-lg">Sign In</a>
+                        </div>
+                        <div sec:authorize="isAuthenticated()">
+                            <a th:href="@{/blogs/create}" class="btn btn-light btn-lg">Create a Post</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Bloggers Section -->
+        <div class="container mb-5">
+            <h2 class="mb-4">Top Bloggers</h2>
+
+            <div class="row">
+                <div class="col-md-3 col-sm-6 mb-4" th:each="blogger : ${topBloggers}">
+                    <div class="card border-0 shadow-sm text-center h-100">
+                        <div class="card-body">
+                            <img th:src="${blogger.profileImage != null ? blogger.profileImage : '/img/default-avatar.jpg'}"
+                                 class="rounded-circle mb-3" width="80" height="80" alt="Blogger avatar">
+                            <h5 class="card-title mb-1">
+                                <a th:href="@{/profile/{username}(username=${blogger.username})}"
+                                   class="text-decoration-none" th:text="${blogger.username}">Blogger Name</a>
+                            </h5>
+                            <p class="card-text small text-muted" th:text="${blogger.bio != null ? #strings.abbreviate(blogger.bio, 60) : 'Blogger'}">Bio</p>
+                            <div class="d-flex justify-content-center text-muted mb-3">
+                                <div class="mx-2">
+                                    <strong th:text="${postCounts.get(blogger.id)}">0</strong> Posts
+                                </div>
+                                <div class="mx-2">
+                                    <strong th:text="${followerCounts.get(blogger.id)}">0</strong> Followers
+                                </div>
+                            </div>
+                            <a th:href="@{/profile/{username}(username=${blogger.username})}" class="btn btn-sm btn-outline-primary">View Profile</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

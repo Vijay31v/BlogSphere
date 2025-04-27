@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Comment Notification</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+<div style="text-align: center; margin-bottom: 20px;">
+    <img src="cid:logo" alt="BlogSphere Logo" width="150">
+</div>
+
+<h2 style="color: #4CAF50;">New Comment on Your Post</h2>
+
+<p>Hello,</p>
+
+<p><strong th:text="${commenterName}">Someone</strong> just commented on your post <strong th:text="${postTitle}">"Title"</strong>:</p>
+
+<div style="background-color: #f5f5f5; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0;">
+    <p style="font-style: italic;" th:text="${commentContent}">"Comment text will appear here."</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a th:href="${postUrl}" style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">View Comment</a>
+</div>
+
+<p>Thank you for being part of the BlogSphere community!</p>
+</body>
+</html>

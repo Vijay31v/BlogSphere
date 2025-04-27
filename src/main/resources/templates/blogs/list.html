@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>All Blog Posts - BlogSphere</title>
+    <link rel="stylesheet" th:href="@{/css/blog.css}">
+</head>
+<body>
+
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>All Blog Posts</h1>
+            <div sec:authorize="isAuthenticated()">
+                <a th:href="@{/blogs/create}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Create New Post
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters & Search -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form th:action="@{/blogs}" method="get" id="filterForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" placeholder="Search blogs..."
+                                       th:value="${param.search}">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <select name="category" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                                <option value="">All Categories</option>
+                                <option th:each="category : ${categories}"
+                                        th:value="${category.id}"
+                                        th:text="${category.name}"
+                                        th:selected="${param.category != null && param.category[0] == category.id.toString()}">
+                                    Category
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <select name="sort" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                                <option value="newest" th:selected="${param.sort == null || param.sort[0] == 'newest'}">Newest First</option>
+                                <option value="oldest" th:selected="${param.sort != null && param.sort[0] == 'oldest'}">Oldest First</option>
+                                <option value="popular" th:selected="${param.sort != null && param.sort[0] == 'popular'}">Most Popular</option>
+                                <option value="comments" th:selected="${param.sort != null && param.sort[0] == 'comments'}">Most Commented</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="page" th:value="${currentPage}">
+                    <input type="hidden" name="size" th:value="${size}">
+                </form>
+            </div>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                    <span th:if="${param.search != null && param.search[0] != ''}" class="me-2">
+                        Search results for: <strong th:text="${param.search[0]}">keyword</strong>
+                    </span>
+                <span th:if="${blogs.totalElements > 0}" class="text-muted">
+                        Showing <span th:text="${blogs.numberOfElements}">10</span> of
+                        <span th:text="${blogs.totalElements}">100</span> posts
+                    </span>
+            </div>
+
+            <div class="btn-group" role="group" aria-label="View options">
+                <button type="button" class="btn btn-outline-secondary active" id="listViewBtn">
+                    <i class="fas fa-list"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="gridViewBtn">
+                    <i class="fas fa-th-large"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Blog List View (default) -->
+        <div id="listView">
+            <div class="card mb-4 blog-card" th:each="blog : ${blogs.content}">
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Featured Image -->
+                        <div class="col-md-3 mb-3 mb-md-0" th:if="${blog.imageUrl}">
+                            <img th:src="${blog.imageUrl}" class="img-fluid rounded" alt="Blog Image">
+                        </div>
+
+                        <!-- Blog Content -->
+                        <div th:class="${blog.imageUrl} ? 'col-md-9' : 'col-md-12'">
+                            <h3 class="card-title">
+                                <a th:href="@{/blogs/{id}(id=${blog.id})}" th:text="${blog.title}" class="text-decoration-none">Blog Title</a>
+                            </h3>
+
+                            <div class="d-flex align-items-center text-muted mb-2">
+                                    <span>
+                                        By <a th:href="@{/profile/{username}(username=${blog.author.username})}"
+                                              th:text="${blog.author.username}" class="text-decoration-none">Author</a>
+                                    </span>
+                                <span class="mx-2">•</span>
+                                <span th:text="${#temporals.format(blog.createdAt, 'dd MMM yyyy')}">Date</span>
+                                <span class="badge bg-secondary ms-2" th:if="${blog.category != null}"
+                                      th:text="${blog.category.name}">Category</span>
+                            </div>
+
+                            <div class="card-text" th:utext="${blogSummaries[__${blogStat.index}__]}">Content preview</div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a th:href="@{/blogs/{id}(id=${blog.id})}" class="btn btn-sm btn-outline-primary">Read More</a>
+                                <div>
+                                        <span class="me-3">
+                                            <i class="far fa-heart"></i> <span th:text="${blog.likes.size()}">0</span>
+                                        </span>
+                                    <span>
+                                            <i class="far fa-comment"></i> <span th:text="${blog.comments.size()}">0</span>
+                                        </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${blogs!=null && blogs.getTotalElements()==0}" class="alert alert-info text-center">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <p>No blog posts found matching your criteria.</p>
+                <a th:href="@{/blogs}" class="btn btn-outline-primary">View All Posts</a>
+            </div>
+        </div>
+
+        <!-- Blog Grid View (hidden by default) -->
+        <div id="gridView" class="row" style="display: none;">
+            <div class="col-md-6 col-lg-4 mb-4" th:each="blog : ${blogs.content}">
+                <div class="card h-100 blog-card">
+                    <div th:if="${blog.imageUrl}" class="blog-card-img-wrapper">
+                        <img th:src="${blog.imageUrl}" class="card-img-top" alt="Blog Image">
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">
+                            <a th:href="@{/blogs/{id}(id=${blog.id})}" th:text="${blog.title}" class="text-decoration-none">Blog Title</a>
+                        </h5>
+
+                        <div class="d-flex align-items-center text-muted mb-2 small">
+                                <span>
+                                    By <a th:href="@{/profile/{username}(username=${blog.author.username})}"
+                                          th:text="${blog.author.username}" class="text-decoration-none">Author</a>
+                                </span>
+                            <span class="mx-1">•</span>
+                            <span th:text="${#temporals.format(blog.createdAt, 'dd MMM yyyy')}">Date</span>
+                        </div>
+
+                        <p class="card-text" th:utext="${blogSummaries[__${blogStat.index}__]}">Content preview</p>
+
+                        <div class="mt-auto d-flex justify-content-between align-items-center">
+                            <a th:href="@{/blogs/{id}(id=${blog.id})}" class="btn btn-sm btn-outline-primary">Read More</a>
+                            <div>
+                                    <span class="me-2 small">
+                                        <i class="far fa-heart"></i> <span th:text="${blog.likes.size()}">0</span>
+                                    </span>
+                                <span class="small">
+                                        <i class="far fa-comment"></i> <span th:text="${blog.comments.size()}">0</span>
+                                    </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent" th:if="${blog.category != null}">
+                        <span class="badge bg-secondary" th:text="${blog.category.name}">Category</span>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${blogs!=null && blogs.getTotalElements()==0}" class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <p>No blog posts found matching your criteria.</p>
+                    <a th:href="@{/blogs}" class="btn btn-outline-primary">View All Posts</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${blogs.totalPages > 1}" aria-label="Page navigation" class="my-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${blogs.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/blogs(page=0, size=${size}, search=${param.search}, category=${param.category}, sort=${param.sort})}" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item" th:classappend="${blogs.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/blogs(page=${blogs.number - 1}, size=${size}, search=${param.search}, category=${param.category}, sort=${param.sort})}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, blogs.totalPages - 1)}"
+                    th:if="${i >= blogs.number - 2 && i <= blogs.number + 2}"
+                    th:classappend="${i == blogs.number} ? 'active'">
+                    <a class="page-link" th:href="@{/blogs(page=${i}, size=${size}, search=${param.search}, category=${param.category}, sort=${param.sort})}" th:text="${i + 1}">1</a>
+                </li>
+
+                <li class="page-item" th:classappend="${blogs.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/blogs(page=${blogs.number + 1}, size=${size}, search=${param.search}, category=${param.category}, sort=${param.sort})}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item" th:classappend="${blogs.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/blogs(page=${blogs.totalPages - 1}, size=${size}, search=${param.search}, category=${param.category}, sort=${param.sort})}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Sidebar content -->
+        <div class="row mt-5">
+            <!-- Popular Tags -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Popular Tags</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            <a th:each="tag : ${popularTags}"
+                               th:href="@{/blogs/tag/{tag}(tag=${tag.name})}"
+                               class="badge bg-light text-dark text-decoration-none">
+                                <span th:text="${tag.name}">Tag</span>
+                                <span class="badge rounded-pill bg-secondary ms-1" th:text="${tag.count}">0</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Bloggers -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Top Bloggers</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex align-items-center" th:each="blogger : ${topBloggers}">
+                                <img th:src="${blogger.profileImage != null ? blogger.profileImage : '/img/default-avatar.jpg'}"
+                                     class="rounded-circle me-3" width="40" height="40" alt="Blogger avatar">
+                                <div>
+                                    <a th:href="@{/profile/{username}(username=${blogger.username})}" class="text-decoration-none" th:text="${blogger.username}">Blogger Name</a>
+                                    <div class="small text-muted">
+                                        <span th:text="${postCounts.get(blogger.id)}">0</span> posts •
+                                        <span th:text="${followerCounts.get(blogger.id)}">0</span> followers
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+ <th:block layout:fragment="scripts">
+    <script>
+        // View toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const listViewBtn = document.getElementById('listViewBtn');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+            const listView = document.getElementById('listView');
+            const gridView = document.getElementById('gridView');
+
+            // Check if there's a saved preference in localStorage
+            const viewPreference = localStorage.getItem('blogViewPreference');
+            if (viewPreference === 'grid') {
+                listView.style.display = 'none';
+                gridView.style.display = 'flex';
+                listViewBtn.classList.remove('active');
+                gridViewBtn.classList.add('active');
+            }
+
+            listViewBtn.addEventListener('click', function() {
+                listView.style.display = 'block';
+                gridView.style.display = 'none';
+                listViewBtn.classList.add('active');
+                gridViewBtn.classList.remove('active');
+                localStorage.setItem('blogViewPreference', 'list');
+            });
+
+            gridViewBtn.addEventListener('click', function() {
+                listView.style.display = 'none';
+                gridView.style.display = 'flex';
+                listViewBtn.classList.remove('active');
+                gridViewBtn.classList.add('active');
+                localStorage.setItem('blogViewPreference', 'grid');
+            });
+        });
+    </script>
+ </th:block>
+</body>
+</html>

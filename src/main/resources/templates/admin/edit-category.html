@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Edit Category - BlogSphere Admin</title>
+</head>
+<body>
+
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Edit Category</h1>
+            <a th:href="@{/admin/categories}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Categories
+            </a>
+        </div>
+
+
+        <!-- Edit Category Form -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Edit Category Details</h6>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/admin/categories/{id}/edit(id=${categoryDto.id})}" method="post" th:object="${categoryDto}">
+                    <input type="hidden" th:field="*{id}">
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" rows="3" th:field="*{description}"></textarea>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="icon" class="form-label">Icon (FontAwesome name)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i th:class="${'fas fa-' + categoryDto.icon}" id="icon-preview"></i></span>
+                            <input type="text" class="form-control" id="icon" th:field="*{icon}" placeholder="e.g., book, code, laptop">
+                        </div>
+                        <div class="form-text">Enter a FontAwesome icon name without the "fa-" prefix</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <a th:href="@{/admin/categories}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+  <th:block layout:fragment="scripts">
+    <script>
+        // Live preview for icon changes
+        document.getElementById('icon').addEventListener('input', function() {
+            const iconPreview = document.getElementById('icon-preview');
+            iconPreview.className = 'fas fa-' + this.value;
+        });
+    </script>
+  </th:block>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <title>Search Results - BlogSphere</title>
+  <link rel="stylesheet" th:href="@{/css/blog.css}">
+</head>
+<body>
+
+  <div layout:fragment="content">
+    <h1>Search Results: <span th:text="${query}"></span></h1>
+    <p class="text-muted" th:text="${blogs.size()} + ' results found'"></p>
+
+    <div class="row mb-4">
+      <div class="col-md-8">
+        <div class="card mb-4 blog-card" th:each="blog : ${blogs}">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3 mb-3 mb-md-0" th:if="${blog.imageUrl}">
+                <img th:src="${blog.imageUrl}" class="img-fluid rounded" alt="Blog Image">
+              </div>
+
+              <div th:class="${blog.imageUrl} ? 'col-md-9' : 'col-md-12'">
+                <h3 class="card-title">
+                  <a th:href="@{/blogs/{id}(id=${blog.id})}" th:text="${blog.title}" class="text-decoration-none">Blog Title</a>
+                </h3>
+
+                <div class="d-flex align-items-center text-muted mb-2">
+                                        <span>
+                                            By <a th:href="@{/profile/{username}(username=${blog.author.username})}"
+                                                  th:text="${blog.author.username}" class="text-decoration-none">Author</a>
+                                        </span>
+                  <span class="mx-2">•</span>
+                  <span th:text="${#temporals.format(blog.createdAt, 'dd MMM yyyy')}">Date</span>
+                  <span class="badge bg-secondary ms-2" th:if="${blog.category != null}"
+                        th:text="${blog.category.name}">Category</span>
+                </div>
+
+                <p class="card-text" th:utext="${blogSummaries[__${blogStat.index}__]}">Content preview</p>
+
+                <div class="d-flex justify-content-between align-items-center">
+                  <a th:href="@{/blogs/{id}(id=${blog.id})}" class="btn btn-sm btn-outline-primary">Read More</a>
+                  <div>
+                                            <span class="me-3">
+                                                <i class="far fa-heart"></i> <span th:text="${blog.likes.size()}">0</span>
+                                            </span>
+                    <span>
+                                                <i class="far fa-comment"></i> <span th:text="${blog.comments.size()}">0</span>
+                                            </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Search Tips</h5>
+          </div>
+          <div class="card-body">
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2"><i class="fas fa-search me-2"></i> Try using shorter keywords</li>
+              <li class="mb-2"><i class="fas fa-tag me-2"></i> Search by category or tag</li>
+              <li class="mb-2"><i class="fas fa-user me-2"></i> Search for posts by author name</li>
+              <li><i class="fas fa-quote-right me-2"></i> Use quotes for exact phrase matching</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Popular Tags</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+              <a th:each="tag : ${popularTags}"
+                 th:href="@{/blogs/tag/{tag}(tag=${tag.name})}"
+                 class="badge bg-light text-dark text-decoration-none">
+                <span th:text="${tag.name}">Tag</span>
+                <span class="badge rounded-pill bg-secondary ms-1" th:text="${tag.count}">0</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(blogs)}" class="alert alert-info text-center">
+      <i class="fas fa-search fa-3x mb-3"></i>
+      <p>No results found for "<span th:text="${query}"></span>".</p>
+      <p>Try different keywords or browse all posts.</p>
+      <a th:href="@{/templates/blogs}" class="btn btn-outline-primary">Browse All Posts</a>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="${blog.title} + ' - BlogSphere'">Blog Title - BlogSphere</title>
+    <meta name="description" th:content="${#strings.abbreviate(blog.content, 160)}">
+    <!-- Open Graph tags for social sharing -->
+    <meta property="og:title" th:content="${blog.title}">
+    <meta property="og:description" th:content="${#strings.abbreviate(blog.content, 160)}">
+    <meta property="og:image" th:content="${blog.imageUrl}">
+    <meta property="og:url" th:content="@{/blogs/{id}(id=${blog.id})}">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" th:href="@{/css/blog.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/blogs}">Blogs</a></li>
+                            <li class="breadcrumb-item" th:if="${blog.category != null}">
+                                <a th:href="@{/blogs/category/{id}(id=${blog.category.id})}"
+                                   th:text="${blog.category.name}">Category</a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page" th:text="${blog.title}">Blog Title</li>
+                        </ol>
+                    </nav>
+
+                    <article class="blog-post">
+                        <!-- Featured Image -->
+                        <div th:if="${blog.imageUrl}" class="mb-4">
+                            <img th:src="${blog.imageUrl}" class="img-fluid rounded" alt="Featured image">
+                        </div>
+
+                        <!-- Title & Metadata -->
+                        <h1 class="blog-post-title mb-1" th:text="${blog.title}">Blog Title</h1>
+                        <div class="blog-post-meta text-muted mb-4">
+                            <div class="d-flex align-items-center">
+                                <img th:src="${blog.author.profileImage != null ? blog.author.profileImage : '/img/default-avatar.jpg'}"
+                                     class="rounded-circle me-2" width="32" height="32" alt="Author avatar">
+                                <span>
+                                        By <a th:href="@{/profile/{username}(username=${blog.author.username})}"
+                                              th:text="${blog.author.username}">Author</a>
+                                        on <span th:text="${#temporals.format(blog.createdAt, 'dd MMM yyyy')}">Date</span>
+                                        <span th:if="${blog.updatedAt != null && !#temporals.format(blog.updatedAt, 'yyyy-MM-dd').equals(#temporals.format(blog.createdAt, 'yyyy-MM-dd'))}"
+                                              class="text-muted">(Updated: <span th:text="${#temporals.format(blog.updatedAt, 'dd MMM yyyy')}">Update Date</span>)</span>
+                                        <span class="badge rounded-pill bg-secondary ms-2" th:if="${blog.category != null}"
+                                              th:text="${blog.category.name}">Category</span>
+                                    </span>
+                            </div>
+                        </div>
+
+                        <!-- Blog Content -->
+                        <div class="blog-post-content mb-5" th:utext="${blog.content}">Content</div>
+
+                        <!-- Tags -->
+                        <div class="mb-4" th:if="${blog.tags != null && !blog.tags.isEmpty()}">
+                            <span class="me-2"><i class="fas fa-tags"></i> Tags:</span>
+                            <a th:each="tag : ${blog.tags}" th:href="@{/blogs/tag/{tag}(tag=${tag})}"
+                               class="badge bg-light text-dark me-1 text-decoration-none" th:text="${tag}">Tag</a>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="blog-post-actions d-flex flex-wrap justify-content-between align-items-center mb-5 py-3 border-top border-bottom">
+                            <!-- Like/Share Actions -->
+                            <div>
+                                <div class="d-inline-block" sec:authorize="isAuthenticated()">
+                                    <form th:if="${!hasLiked}" th:action="@{/blogs/{id}/like(id=${blog.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-heart"></i> Like (<span th:text="${blog.likes.size()}">0</span>)
+                                        </button>
+                                    </form>
+                                    <form th:if="${hasLiked}" th:action="@{/blogs/{id}/unlike(id=${blog.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-heart"></i> Liked (<span th:text="${blog.likes.size()}">0</span>)
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <div class="btn-group ms-2">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-share-alt"></i> Share
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" th:href="${'https://twitter.com/intent/tweet?text=' + blog.title + '&url=' + currentUrl}"
+                                               target="_blank">
+                                                <i class="fab fa-twitter"></i> Twitter
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" th:href="${'https://www.facebook.com/sharer/sharer.php?u=' + currentUrl}"
+                                               target="_blank">
+                                                <i class="fab fa-facebook"></i> Facebook
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" th:href="${'https://www.linkedin.com/sharing/share-offsite/?url=' + currentUrl}"
+                                               target="_blank">
+                                                <i class="fab fa-linkedin"></i> LinkedIn
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button class="dropdown-item copy-link" th:data-url="${currentUrl}">
+                                                <i class="fas fa-link"></i> Copy Link
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Author Actions -->
+                            <div sec:authorize="isAuthenticated()"
+                                 th:if="${blog.author.username == #authentication.name || #authorization.expression('hasRole(''ADMIN'')')}">
+                                <a th:href="@{/blogs/{id}/edit(id=${blog.id})}" class="btn btn-sm btn-outline-secondary me-2">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form class="d-inline" th:action="@{/blogs/{id}/delete(id=${blog.id})}" method="post">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Are you sure you want to delete this post? This action cannot be undone.')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Author Bio -->
+                        <div class="card mb-5">
+                            <div class="card-body">
+                                <div class="d-flex flex-column flex-md-row">
+                                    <div class="me-md-4 mb-3 mb-md-0 text-center">
+                                        <img th:src="${blog.author.profileImage != null ? blog.author.profileImage : '/img/default-avatar.jpg'}"
+                                             class="rounded-circle" width="100" height="100" alt="Author avatar">
+                                    </div>
+                                    <div>
+                                        <h5 class="card-title">About <span th:text="${blog.author.username}">Author</span></h5>
+                                        <p class="card-text" th:text="${blog.author.bio != null ? blog.author.bio : 'No bio available.'}">
+                                            Author bio
+                                        </p>
+                                        <div>
+                                            <a th:href="@{/profile/{username}(username=${blog.author.username})}" class="btn btn-sm btn-outline-primary">View Profile</a>
+                                            <div class="btn-group" sec:authorize="isAuthenticated()"
+                                                 th:if="${blog.author.username != #authentication.name}">
+                                                <form th:if="${!isFollowing}" th:action="@{/subscriptions/{id}(id=${blog.author.id})}" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-primary ms-2">
+                                                        <i class="fas fa-user-plus"></i> Follow
+                                                    </button>
+                                                </form>
+                                                <form th:if="${isFollowing}" th:action="@{/subscriptions/{id}/unfollow(id=${blog.author.id})}" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary ms-2">
+                                                        <i class="fas fa-user-check"></i> Following
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comments Section -->
+                        <div class="comments-section" th:if="${blog.allowComments}">
+                            <h3 class="mb-4">
+                                Comments (<span th:text="${blog.comments.size()}">0</span>)
+                            </h3>
+
+                            <!-- Comment Form -->
+                            <div sec:authorize="isAuthenticated()" class="card mb-4">
+                                <div class="card-body">
+                                    <form th:action="@{/comments}" th:object="${commentDto}" method="post">
+                                        <div class="mb-3">
+                                                <textarea name="commentText" th:field="*{commentText}" class="form-control" rows="3"
+                                                          placeholder="Add a comment..." required></textarea>
+                                        </div>
+                                        <div class="d-flex justify-content-end">
+                                            <button type="submit" class="btn btn-primary">Post Comment</button>
+                                        </div>
+                                        <input type="hidden" th:field="*{blogPostId}" />
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div sec:authorize="!isAuthenticated()" class="alert alert-light mb-4">
+                                Please <a th:href="@{/login}">login</a> to post comments.
+                            </div>
+
+                            <!-- Comments List -->
+                            <div class="comment-list">
+                                <div th:each="comment : ${blog.comments}" class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex mb-3">
+                                            <img th:src="${comment.user.profileImage != null ? comment.user.profileImage : '/img/default-avatar.jpg'}"
+                                                 class="rounded-circle me-2" width="32" height="32" alt="User avatar">
+                                            <div>
+                                                <div class="fw-bold">
+                                                    <a th:href="@{/profile/{username}(username=${comment.user.username})}"
+                                                       th:text="${comment.user.username}">User</a>
+                                                    <span class="badge bg-secondary ms-1"
+                                                          th:if="${comment.user.id == blog.author.id}">Author</span>
+                                                </div>
+                                                <div class="text-muted small">
+                                                    <span th:text="${#temporals.format(comment.createdAt, 'dd MMM yyyy HH:mm')}">Date</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Comment Actions Dropdown -->
+                                            <div class="dropdown ms-auto" sec:authorize="isAuthenticated()"
+                                                 th:if="${comment.user.username == #authentication.name || blog.author.username == #authentication.name || #authorization.expression('hasRole(''ADMIN'')')}">
+                                                <button class="btn btn-sm text-muted dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <form th:action="@{/comments/{id}/delete(id=${comment.id})}" method="post">
+                                                            <button type="submit" class="dropdown-item text-danger"
+                                                                    onclick="return confirm('Delete this comment?')">
+                                                                <i class="fas fa-trash me-2"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <div class="comment-content">
+                                            <p class="mb-0" th:text="${comment.commentText}">Comment text</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div th:if="${#lists.isEmpty(blog.comments)}" class="text-center py-5">
+                                    <i class="far fa-comment-dots fa-3x text-light mb-3"></i>
+                                    <p>No comments yet. Be the first to comment!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-light text-center py-4" th:unless="${blog.allowComments}">
+                            <i class="fas fa-comments-slash fa-2x text-muted mb-3"></i>
+                            <p>Comments are disabled for this post.</p>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Related Posts -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Related Posts</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush">
+                                <a th:each="relatedPost : ${relatedPosts}"
+                                   th:href="@{/blogs/{id}(id=${relatedPost.id})}"
+                                   class="list-group-item list-group-item-action">
+                                    <div class="d-flex align-items-center">
+                                        <div th:if="${relatedPost.imageUrl}" class="me-3">
+                                            <img th:src="${relatedPost.imageUrl}" class="rounded" width="50" height="50" alt="Thumbnail">
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1" th:text="${relatedPost.title}">Related post title</h6>
+                                            <small class="text-muted" th:text="${#temporals.format(relatedPost.createdAt, 'dd MMM yyyy')}">Date</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div th:if="${#lists.isEmpty(relatedPosts)}" class="p-3 text-center text-muted">
+                                No related posts found.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Popular Tags -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Popular Tags</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap gap-2">
+                                <a th:each="tag : ${popularTags}"
+                                   th:href="@{/blogs/tag/{tag}(tag=${tag.name})}"
+                                   class="badge bg-light text-dark text-decoration-none">
+                                    <span th:text="${tag.name}">Tag</span>
+                                    <span class="badge rounded-pill bg-secondary ms-1" th:text="${tag.count}">0</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<th:block layout:fragment="scripts">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        // Copy link to clipboard
+        document.querySelectorAll('.copy-link').forEach(button => {
+            button.addEventListener('click', function() {
+                const url = this.getAttribute('data-url');
+                navigator.clipboard.writeText(url).then(() => {
+                    // Change button text temporarily to show success
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 2000);
+                }, (err) => {
+                    console.error('Could not copy text: ', err);
+                });
+            });
+        });
+
+        // Highlight code blocks
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>

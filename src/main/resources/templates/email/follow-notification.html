@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>New Follower Notification</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+<div style="text-align: center; margin-bottom: 20px;">
+  <img src="cid:logo" alt="BlogSphere Logo" width="150">
+</div>
+
+<h1 style="color: #4CAF50;">New Follower Alert!</h1>
+
+<p>Hi there,</p>
+
+<p>
+  <strong th:text="${followerName}">John Doe</strong>
+  has started following you on BlogSphere.
+  Check out their profile to see their latest activity.
+</p>
+
+<div style="text-align: center; margin: 30px 0;">
+  <a th:href="${profileUrl}"
+     style="background-color: #4CAF50; color: white; padding: 12px 24px;
+                  text-decoration: none; border-radius: 4px; font-weight: bold;">
+    View Profile
+  </a>
+</div>
+
+<p>Happy connecting!</p>
+<p>— The BlogSphere Team</p>
+
+<hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+<p style="font-size: 12px; color: #777; text-align: center;">
+  You received this email because someone followed you on BlogSphere.
+  <br>
+  <a th:href="${preferenceEditUrl}" style="color: #4CAF50;">
+    Manage notification preferences
+  </a>
+</p>
+</body>
+</html>

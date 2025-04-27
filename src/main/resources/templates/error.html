@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Error - BlogSphere</title>
+</head>
+<body>
+
+    <div layout:fragment="content">
+        <div class="text-center py-5">
+            <h1 class="display-1 text-danger" th:text="${status ?: '404'}">404</h1>
+            <h2 th:text="${error ?: 'Page Not Found'}">Page Not Found</h2>
+            <p class="lead" th:text="${message ?: 'The requested page could not be found.'}">The requested page could not be found.</p>
+            <a th:href="@{/}" class="btn btn-primary mt-4">Return to Home</a>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <title>Notifications - BlogSphere</title>
+  <style>
+    .notification-unread {
+      background-color: rgba(13, 110, 253, 0.05);
+      border-left: 3px solid #0d6efd;
+    }
+    .notification-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      margin-right: 15px;
+    }
+    .notification-comment {
+      background-color: rgba(25, 135, 84, 0.1);
+      color: #198754;
+    }
+    .notification-like {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+    }
+    .notification-follow {
+      background-color: rgba(13, 110, 253, 0.1);
+      color: #0d6efd;
+    }
+    .notification-system {
+      background-color: rgba(108, 117, 125, 0.1);
+      color: #6c757d;
+    }
+    .notification-time {
+      color: #6c757d;
+      font-size: 0.8rem;
+    }
+    .notification-card {
+      transition: all 0.3s ease;
+    }
+    .notification-card:hover {
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .notification-content {
+      padding-right: 2.5rem;
+    }
+
+    .delete-notification-btn {
+      opacity: 1 !important;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+      background: none;
+      border: none;
+    }
+
+    .notification-card:hover {
+      opacity: 1;
+    }
+
+    .position-relative {
+      position: relative;
+    }
+
+  </style>
+</head>
+<body>
+
+
+  <div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1>Notifications</h1>
+      <div>
+        <button id="deleteAllBtn" class="btn btn-outline-danger me-2"
+                th:if="${notifications.totalElements > 0}">
+          <i class="fas fa-trash"></i> Delete All
+        </button>
+        <button id="markAllReadBtn" class="btn btn-outline-primary"
+                th:if="${notifications.totalElements > 0}">
+          <i class="fas fa-check-double"></i> Mark All as Read
+        </button>
+      </div>
+    </div>
+
+
+    <!-- Notifications List -->
+    <div class="card">
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush" th:if="${notifications.totalElements > 0}">
+          <div th:each="notification : ${notifications}"
+               th:class="${notification.read} ? 'list-group-item notification-card' : 'list-group-item notification-card notification-unread'"
+               th:data-notification-id="${notification.id}">
+            <button class="btn btn-sm btn-link text-danger position-absolute delete-notification-btn" aria-label="Delete notification"
+                    style="position: absolute; top: 8px; right: 8px; z-index: 2;">
+              <i class="fas fa-times"></i>
+            </button>
+            <div class="d-flex notification-content">
+              <!-- Simplified notification icon handling -->
+              <div th:class="notification-icon"
+                   th:classappend="${notification.type.name() == 'COMMENT'} ? 'notification-comment' :
+                    (${notification.type.name() == 'LIKE'} ? 'notification-like' :
+                     (${notification.type.name() == 'FOLLOW'} ? 'notification-follow' : 'notification-system'))">
+
+                <i class="fas"
+                   th:classappend="${notification.type.name() == 'COMMENT'} ? 'fa-comment' :
+                      (${notification.type.name() == 'LIKE'} ? 'fa-heart' :
+                       (${notification.type.name() == 'FOLLOW'} ? 'fa-user-plus' : 'fa-bell'))"></i>
+              </div>
+
+
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start">
+                  <p class="mb-1" th:text="${notification.message}">Notification message</p>
+                  <small class="ms-2 notification-time"
+                         th:text="${#temporals.format(notification.createdAt, 'dd MMM yyyy HH:mm')}">Time</small>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <a th:if="${notification.link != null}" th:href="${notification.link}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-external-link-alt"></i> View
+                  </a>
+                  <div class="notification-actions mt-2">
+                  <button th:if="${notification.read}" class="btn btn-sm btn-link mark-unread-btn">
+                    Mark as unread
+                  </button>
+                  <button th:unless="${notification.read}" class="btn btn-sm btn-link mark-read-btn">
+                    Mark as read
+                  </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${notifications.totalElements == 0}" class="text-center py-5">
+          <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+          <h5>No notifications yet</h5>
+          <p class="text-muted">When someone interacts with your posts or profile, you'll see notifications here.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${notifications.totalPages > 1}" class="d-flex justify-content-center mt-4">
+      <nav aria-label="Notifications pagination">
+        <ul class="pagination">
+          <li th:class="${currentPage == 0} ? 'page-item disabled' : 'page-item'">
+            <a class="page-link" th:href="@{/notifications(page=${currentPage - 1})}" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+
+          <li th:each="i : ${#numbers.sequence(0, notifications.totalPages - 1)}"
+              th:class="${currentPage == i} ? 'page-item active' : 'page-item'">
+            <a class="page-link" th:href="@{/notifications(page=${i})}" th:text="${i + 1}">1</a>
+          </li>
+
+          <li th:class="${currentPage == notifications.totalPages - 1} ? 'page-item disabled' : 'page-item'">
+            <a class="page-link" th:href="@{/notifications(page=${currentPage + 1})}" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+
+<th:block layout:fragment="scripts">
+  <script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+      function updateBadge(unreadCount) {
+        const badge = document.getElementById('notification-badge');
+        if (badge) {
+          badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+          badge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+        }
+      }
+
+      function attachMarkRead(button, notificationItem, notificationId, actions) {
+        button.addEventListener('click', function() {
+          fetch(`/notifications/${notificationId}/read`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              [csrfHeader]: csrfToken
+            }
+          })
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data.success) {
+                      notificationItem.classList.remove('notification-unread');
+                      actions.innerHTML = `<button class="btn btn-sm btn-link mark-unread-btn">Mark as unread</button>`;
+                      attachMarkUnread(actions.querySelector('.mark-unread-btn'), notificationItem, notificationId, actions);
+                      updateBadge(data.unreadCount);
+                    }
+                  });
+        });
+      }
+      function attachMarkUnread(button, notificationItem, notificationId, actions) {
+        button.addEventListener('click', function() {
+          fetch(`/notifications/${notificationId}/unread`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              [csrfHeader]: csrfToken
+            }
+          })
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data.success) {
+                      notificationItem.classList.add('notification-unread');
+                      actions.innerHTML = `<button class="btn btn-sm btn-link mark-read-btn">Mark as read</button>`;
+                      document.getElementById('markAllReadBtn').disabled = false;
+                      attachMarkRead(actions.querySelector('.mark-read-btn'), notificationItem, notificationId, actions);
+                      updateBadge(data.unreadCount);
+                    }
+                  });
+        });
+      }
+// Then, on page load:
+      document.querySelectorAll('.notification-card').forEach(card => {
+        const notificationId = card.dataset.notificationId;
+        const actions = card.querySelector('.notification-actions');
+        const markReadBtn = actions.querySelector('.mark-read-btn');
+        const markUnreadBtn = actions.querySelector('.mark-unread-btn');
+        if (markReadBtn) attachMarkRead(markReadBtn, card, notificationId, actions);
+        if (markUnreadBtn) attachMarkUnread(markUnreadBtn, card, notificationId, actions);
+      });
+
+
+      // Mark all notifications
+      const markAllBtn = document.getElementById('markAllReadBtn');
+      if (markAllBtn) {
+        markAllBtn.addEventListener('click', function() {
+          fetch('/notifications/mark-all-read', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              [csrfHeader]: csrfToken
+            }
+          })
+                  .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                  })
+                  .then(data => {
+                    if (data.success) {
+                      document.querySelectorAll('[data-notification-id]').forEach(item => {
+                        item.classList.remove('notification-unread');
+                        const actions = item.querySelector('.notification-actions');
+                        actions.innerHTML = `<button class="btn btn-sm btn-link mark-unread-btn">Mark as unread</button>`;
+                        const markAsUnreadBtn= actions.querySelector('.mark-unread-btn');
+                        attachMarkUnread(markAsUnreadBtn,item, item.dataset.notificationId, actions);
+                      });
+                      updateBadge(data.unreadCount);
+                      if (data.unreadCount === 0) markAllBtn.disabled = true;
+                    }
+                  })
+                  .catch(error => console.error('Error:', error));
+        });
+      }
+
+
+      // Delete single notification
+      document.querySelectorAll('.delete-notification-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+          const notificationItem = this.closest('[data-notification-id]');
+          const notificationId = notificationItem.dataset.notificationId;
+
+          fetch(`/notifications/${notificationId}/delete`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              [csrfHeader]: csrfToken
+            }
+          })
+                  .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                  })
+                  .then(data => {
+                    if (data.success) {
+                      notificationItem.remove();
+                      // Update badge count if needed
+                      updateBadge(data.unreadCount);
+                    }
+                  })
+                  .catch(error => console.error('Error:', error));
+        });
+      });
+
+      // Delete all notifications
+      const deleteAllBtn = document.getElementById('deleteAllBtn');
+      if (deleteAllBtn) {
+        deleteAllBtn.addEventListener('click', function() {
+          fetch('/notifications/delete-all', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              [csrfHeader]: csrfToken
+            }
+          }).then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                  })
+                  .then(data => {
+                    if (data.success) {
+                      // Remove all notifications from view
+                      document.querySelectorAll('[data-notification-id]').forEach(item => item.remove());
+                      // Show empty state
+                      document.querySelector('.text-center.py-5').style.display = 'block';
+                      // Hide buttons
+                      deleteAllBtn.style.display = 'none';
+                      markAllReadBtn.style.display = 'none';
+                    }
+                  })
+                  .catch(error => console.error('Error:', error));
+        });
+      }
+
+
+
+    });
+
+  </script>
+</th:block>
+</body>
+</html>

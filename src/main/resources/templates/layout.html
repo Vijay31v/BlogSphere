@@ -1,0 +1,181 @@
+<!-- IMPROVED layout.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <title>BlogSphere - A Blogging Platform</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <!-- Additional CSS files based on page needs -->
+    <th:block th:fragment="additionalCSS" th:remove="tag">
+        <!-- Will be replaced by page-specific CSS -->
+    </th:block>
+
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">BlogSphere</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/blogs}">Blogs</a>
+                </li>
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item" sec:authorize="!isAuthenticated()">
+                    <a class="nav-link" th:href="@{/login}">Login</a>
+                </li>
+                <li class="nav-item" sec:authorize="!isAuthenticated()">
+                    <a class="nav-link" th:href="@{/register}">Register</a>
+                </li>
+                <li class="nav-item dropdown position-relative me-2" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell"></i>
+                        <span id="notification-badge" class="position-absolute top-20 start-100 translate-middle badge rounded-pill bg-danger"
+                              style="display: none;">0</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
+                        <li><h6 class="dropdown-header">Notifications</h6></li>
+                        <li th:if="${#lists.isEmpty(recentNotifications)}">
+                            <span class="dropdown-item text-center">No notifications</span>
+                        </li>
+                        <li th:each="notification : ${recentNotifications}">
+                            <a class="dropdown-item" th:href="${notification.link}">
+                                <small class="text-muted" th:text="${#temporals.format(notification.createdAt, 'dd MMM, HH:mm')}">Date</small>
+                                <p class="mb-0" th:text="${notification.message}">Notification message</p>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-center" th:href="@{/notifications}">View all notifications</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <span sec:authentication="name">Username</span>
+                    </a>
+
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:href="@{/profile/{username}(username=${#authentication.name})}">Profile</a></li>
+                        <li><a class="dropdown-item" th:href="@{/subscriptions}">Subscriptions</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post">
+                                <button class="dropdown-item" type="submit">Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}">Error message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Main content fragment -->
+    <div layout:fragment="content" th:remove="tag">
+        <!-- Content will be inserted here -->
+    </div>
+</div>
+
+<footer class="bg-dark text-white py-3 mt-5">
+    <div class="container text-center">
+        <p>&copy; 2025 BlogSphere. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/main.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stomp-websocket@2.3.4-next/lib/stomp.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Only connect if user is logged in
+    const isAuthenticated = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+
+    if (isAuthenticated) {
+        const socket = new SockJS('/ws');
+        const stompClient = Stomp.over(socket);
+        console.log('Connected to WebSocket');
+        stompClient.connect({}, function() {
+            console.log("inside stompClient.connect, connected: ", stompClient.connected);
+            const userId = /*[[${#authentication.principal instanceof T(org.example.blogsphere.service.CustomUserDetailsService.CustomUserDetails)?#authentication.principal.id : #authentication.name}]]*/ 'none';
+            const name = /*[[${#authentication.principal instanceof T(org.example.blogsphere.service.CustomUserDetailsService.CustomUserDetails)?#authentication.name : 'none'}]]*/ 'none';
+            console.log('Connected to WebSocket, user ID: ', userId);
+            console.log('Connected to WebSocket, user name: ', name);
+            const callback = function(notification) {
+                console.log('Received notification: ', notification);
+                const notificationData = JSON.parse(notification.body);
+                console.log('Notification data: ', notificationData);
+                showNotification(notificationData);
+            };
+            stompClient.subscribe('/user/' + name + '/queue/notifications', callback);
+        });
+
+        function showNotification(notification) {
+            // Update notification count badge
+            console.log('Updating notification count badge');
+            const badge = document.getElementById('notification-badge');
+            console.log('Notification badge: ', badge);
+            if (badge) {
+                const count = parseInt(badge.textContent || '0') + 1;
+                badge.textContent = count;
+                badge.style.display = 'inline-block';
+            }
+
+            // Show toast notification
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.textContent = notification.message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 500);
+            }, 5000);
+        }
+        const unreadCount = /*[[${unreadNotificationCount ?: 0}]]*/ 0;
+        const badge = document.getElementById('notification-badge');
+        if (badge && unreadCount > 0) {
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.style.display = 'inline-block';
+        }
+    }
+    /*]]>*/
+</script>
+
+<!-- Scripts fragment for page-specific JS -->
+<th:block layout:fragment="scripts" th:remove="tag">
+</th:block>
+
+</body>
+</html>

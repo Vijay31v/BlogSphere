@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Admin Dashboard - BlogSphere</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body>
+    <div layout:fragment="content">
+        <h1 class="mb-4">Admin Dashboard</h1>
+
+        <!-- Stats Overview -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Users</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalUsers}">0</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-users fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Blogs</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalBlogs}">0</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-blog fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Comments</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalComments}">0</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-comments fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">New Users (30d)</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${newUsers}">0</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Chart -->
+
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <select id="yearFilter" class="form-select">
+                            <option th:each="y : ${T(java.time.Year).now().getValue() - 2025 }"
+                                    th:value="${2025 + y}"
+                                    th:text="${2025 + y}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select id="monthFilter" class="form-select">
+                            <option th:each="m : ${#numbers.sequence(1,12)}"
+                                    th:value="${m}"
+                                    th:text="${T(java.time.Month).of(m).toString()}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button id="applyFilter" class="btn btn-primary w-100">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Chart Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Platform Analytics</h5>
+                    </div>
+                    <div class="card-body p-0" style="height: 400px;">
+                        <div class="chart-container">
+                            <canvas id="analyticsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
+ <th:block layout:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9"></script>
+     <script th:inline="javascript">
+         /*<![CDATA[*/
+         let analyticsChart = null;
+
+         function loadDashboardData(year, month) {
+             fetch(`/admin/dashboard-data?year=${year}&month=${month}`)
+                 .then(response => response.json())
+                 .then(data => {
+                     updateAnalyticsChart(data);
+                 });
+         }
+
+         function updateAnalyticsChart(data) {
+             const ctx = document.getElementById('analyticsChart').getContext('2d');
+
+             if(analyticsChart) analyticsChart.destroy();
+
+             analyticsChart = new Chart(ctx, {
+                 type: 'bar',
+                 data: {
+                     labels: ['Users', 'Blog Posts', 'Comments'],
+                     datasets: [{
+                         label: 'Current Period',
+                         data: [
+                             data.userStats.total,
+                             data.blogStats.total,
+                             data.commentStats.total
+                         ],
+                         backgroundColor: [
+                             'rgba(78, 115, 223, 0.5)',
+                             'rgba(28, 200, 138, 0.5)',
+                             'rgba(54, 185, 204, 0.5)'
+                         ],
+                         borderColor: [
+                             'rgba(78, 115, 223, 1)',
+                             'rgba(28, 200, 138, 1)',
+                             'rgba(54, 185, 204, 1)'
+                         ],
+                         borderWidth: 2
+                     }]
+                 },
+                 options: {
+                     indexAxis: 'x',
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: { display: false },
+                         title: { display: false },
+                         tooltip: {
+                             enabled: true,
+                             mode: 'index',
+                             intersect: false,
+                             filter: (tooltipItem) => {
+                                 // Show tooltip even for zero values
+                                 return tooltipItem.raw !== null;
+                             }
+                         }
+                     },
+                     scales: {
+                         x: {
+                             grid: { display: false }
+                         },
+                         y: {
+                             beginAtZero: true,
+                             grid: { display: false }
+                         }
+                     },
+                     layout: {
+                         padding: {
+                             top: 10,
+                             bottom: 10,
+                             left: 10,
+                             right: 10
+                         }
+                     }
+                 }
+             });
+         }
+
+         document.addEventListener('DOMContentLoaded', () => {
+             // Remove chart type button event listeners
+             const currentDate = new Date();
+             document.getElementById('yearFilter').value = currentDate.getFullYear();
+             document.getElementById('monthFilter').value = currentDate.getMonth() + 1;
+
+             document.getElementById('applyFilter').addEventListener('click', () => {
+                 const year = document.getElementById('yearFilter').value;
+                 const month = document.getElementById('monthFilter').value;
+                 loadDashboardData(year, month);
+             });
+
+             // Initial load
+             loadDashboardData(currentDate.getFullYear(), currentDate.getMonth() + 1);
+         });
+         /*]]>*/
+     </script>
+ </th:block>
+</body>
+</html>

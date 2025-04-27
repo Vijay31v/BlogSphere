@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+  <title>Comment Management - Admin</title>
+</head>
+<body>
+
+  <div layout:fragment="content">
+    <h1 class="mb-4">Comment Management</h1>
+
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">All Comments</h6>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped" id="commentTable" width="100%" cellspacing="0">
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>Blog</th>
+              <th>User</th>
+              <th>Comment</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="comment : ${comments}">
+              <td th:text="${comment.id}">1</td>
+              <td>
+                <a th:href="@{/blogs/{id}(id=${comment.blogPost.id})}" th:text="${comment.blogPost.title}">Blog Title</a>
+              </td>
+              <td th:text="${comment.user.username}">Username</td>
+              <td th:text="${#strings.abbreviate(comment.commentText, 50)}">Comment text...</td>
+              <td th:text="${#temporals.format(comment.createdAt, 'dd MMM yyyy')}">Date</td>
+              <td>
+                <form th:action="@{/admin/comments/{id}/delete(id=${comment.id})}" method="post">
+                  <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this comment?')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
